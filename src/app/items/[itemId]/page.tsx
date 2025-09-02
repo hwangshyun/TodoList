@@ -13,7 +13,7 @@ export default function ItemDetailPage() {
   const { data, isLoading, error } = useGetTodo(TENANT_ID, id);
   const updateItem = usePatchTodo(TENANT_ID);
   const deleteItem = useDeleteTodo(TENANT_ID);
-  const upload = useUploadImage(TENANT_ID);           // ✅ 업로드 훅
+  const upload = useUploadImage(TENANT_ID);
 
   const [name, setName] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
@@ -30,12 +30,15 @@ export default function ItemDetailPage() {
     }
   }, [data]);
 
-  if (!itemId || Number.isNaN(id)) return <p>유효하지 않은 항목입니다.</p>;
-  if (isLoading) return <p>로딩중…</p>;
-  if (error) return <p className="text-rose-500">에러: {(error as Error).message}</p>;
-  if (!data) return <p>데이터 없음</p>;
+  const isDirty =
+  name !== (data?.name ?? "") ||
+  memo !== (data?.memo ?? "") ||
+  imageUrl !== (data?.imageUrl ?? null) ||
+  isCompleted !== (data?.isCompleted ?? false);
 
-  // ✅ 파일 선택 → 업로드 → URL 상태 반영
+  if (isLoading) return <p>로딩중…</p>;
+
+
   const onPickImage = () => fileInputRef.current?.click();
 
   const onChangeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +47,7 @@ export default function ItemDetailPage() {
 
     upload.mutate(f, {
       onSuccess: (url) => {
-        setImageUrl(url); // 서버에서 받은 url 저장
+        setImageUrl(url);
       },
       onError: (err) => {
         alert((err as Error).message);
@@ -54,8 +57,17 @@ export default function ItemDetailPage() {
   };
 
   const handleSave = () => {
+    const nm = name.trim();
+
+    const dto: any = {
+      isCompleted,
+      ...(nm ? { name: nm } : {}),
+      ...(memo !== undefined ? { memo } : {}),
+      ...(imageUrl ? { imageUrl } : {}),       // 업로드 안 했으면 제외
+    };
+
     updateItem.mutate(
-      { id, dto: { name: name.trim(), memo: memo || null, imageUrl, isCompleted } },
+      { id, dto },
       {
         onSuccess: () => {
           alert("수정 완료");
@@ -67,7 +79,7 @@ export default function ItemDetailPage() {
   };
 
   const handleDelete = () => {
-    if (!confirm("정말 삭제하시겠어요?")) return;
+    if (!confirm("삭제하시겠습니까?")) return;
     deleteItem.mutate(id, {
       onSuccess: () => {
         alert("삭제 완료");
@@ -78,90 +90,82 @@ export default function ItemDetailPage() {
   };
 
   return (
-    <div className="space-y-6 bg-white">
-      {/* 제목 + 완료 토글 */}
-      <div className={`w-full h-[56px] flex items-center gap-3 rounded-full border-2 border-slate-900 shadow-[2px_2px_0_#0F172A] px-4 ${isCompleted ? "bg-violet-100" : "bg-white"}`}>
-        <button
-          type="button"
-          onClick={() => setIsCompleted((v) => !v)}
-          aria-label={isCompleted ? "완료 해제" : "완료 처리"}
-          className="grid place-items-center h-8 w-8 rounded-full border-2 border-slate-900 bg-slate-100 cursor-pointer"
-        >
-          <img src={isCompleted ? "/check.svg" : "/empty-check.svg"} alt="" />
-        </button>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={`flex-1 text-center font-semibold outline-none bg-transparent ${isCompleted ? "line-through text-slate-500" : "text-slate-900"}`}
-          placeholder="제목을 입력하세요"
-        />
-        <div className="w-8" />
-      </div>
+<div className="space-y-6 bg-white">
+  {/* 상단 토글/제목 바 */}
+  <div
+    className={`w-full h-16 flex items-center justify-center gap-3 rounded-3xl border-[2px] border-slate-900 px-4 ${
+      isCompleted ? "bg-violet-100" : "bg-white"
+    }`}
+  >
+    <button type="button" onClick={() => setIsCompleted((v) => !v)} className="cursor-pointer">
+      <img src={isCompleted ? "/check.svg" : "/empty-check.svg"} alt="check" />
+    </button>
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      className={`font-semibold outline-none bg-transparent ${
+        isCompleted ? "line-through text-slate-500" : "text-slate-900"
+      }`}
+      placeholder="제목을 입력하세요"
+    />
+  </div>
 
-      {/* 이미지 영역 */}
-      <div className="relative rounded-[20px] border-2 border-dashed border-slate-300 bg-slate-50/60 min-h-[220px] grid place-items-center overflow-hidden">
-        {imageUrl ? (
-          <img src={imageUrl} alt="이미지" className="max-h-[360px] object-contain" />
-        ) : (
-          <div className="text-slate-400 flex flex-col items-center gap-2">
-            <div className="h-12 w-12 rounded-full bg-slate-200 grid place-items-center border-2 border-slate-300">
-              <span className="text-xl">🖼️</span>
-            </div>
-            <p className="text-sm">{upload.isPending ? "업로드 중…" : "이미지를 업로드하세요"}</p>
-          </div>
-        )}
+  <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start">
 
-        <button
-          type="button"
-          onClick={onPickImage}
-          disabled={upload.isPending}
-          className="absolute bottom-3 right-3 h-10 w-10 rounded-full border-2 border-slate-900 shadow-[2px_2px_0_#0F172A] bg-slate-200 text-slate-900 grid place-items-center text-xl cursor-pointer disabled:opacity-60"
-          title="이미지 추가"
-        >
-          +
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onChangeFile}
-        />
-      </div>
-
-      {/* 메모 */}
-      <div className="rounded-[20px] border-2 border-slate-900 bg-[#FEF7CD] shadow-[2px_2px_0_#0F172A] overflow-hidden">
-        <div className="py-3 text-center font-semibold text-amber-800 border-b border-amber-200">Memo</div>
-        <div className="p-6">
-          <textarea
-            placeholder="메모를 입력하세요"
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            className="w-full min-h-[140px] resize-y outline-none bg-[length:100%_32px] bg-repeat-y bg-[linear-gradient(transparent_31px,_#F8E9A0_31px,_#F8E9A0_32px,_transparent_32px)] bg-transparent"
-          />
+    <div className="h-[311px] relative rounded-[20px] border-2 border-dashed border-slate-300 bg-slate-50/60 grid place-items-center overflow-hidden">
+      {imageUrl ? (
+        <img src={imageUrl} alt="이미지" className="object-contain h-full " />
+      ) : (
+        <div className="text-slate-400 flex flex-col items-center gap-2">
+          <img src="/empty-img.svg" alt="" />
         </div>
-      </div>
+      )}
 
-      {/* 액션 */}
-      <div className="flex items-center justify-center gap-4">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={updateItem.isPending}
-          className="inline-flex items-center gap-2 px-6 h-12 rounded-3xl border-2 border-slate-900 bg-slate-200 text-slate-900 shadow-[2px_2px_0_#0F172A] font-semibold"
-        >
-          {updateItem.isPending ? "저장 중…" : "수정 완료"}
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={deleteItem.isPending}
-          className="inline-flex items-center gap-2 px-6 h-12 rounded-3xl border-2 border-slate-900 bg-rose-500 text-white shadow-[2px_2px_0_#0F172A] font-semibold"
-        >
-          {deleteItem.isPending ? "삭제 중…" : "삭제하기"}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onPickImage}
+        disabled={upload.isPending}
+        className="absolute bottom-3 right-3 h-10 w-10 cursor-pointer"
+      >
+        {imageUrl ? <img src="/edit-img.svg" alt="" /> : <img src="/add-img.svg" alt="" />}
+      </button>
+
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onChangeFile} />
     </div>
+
+    <div className="h-[311px] rounded-[20px] bg-[#FEF7CD] overflow-hidden border border-amber-200">
+      <div className="py-3 text-center font-extrabold text-lg text-amber-800">Memo</div>
+      <textarea
+        placeholder="메모를 입력하세요"
+        value={memo}
+        onChange={(e) => setMemo(e.target.value)}
+        className="text-center font-normal text-slate-800 w-full h-full resize-y outline-none p-6 bg-[length:100%_32px] bg-repeat-y bg-[linear-gradient(transparent_31px,_#F8E9A0_31px,_#F8E9A0_32px,_transparent_32px)]"
+      />
+    </div>
+  </div>
+
+<div className="flex items-center justify-center md:justify-end gap-4">
+  <button
+  type="button"
+  onClick={handleSave}
+  disabled={updateItem.isPending}
+  className={`inline-flex items-center gap-1 px-6 h-13 rounded-3xl border-2 border-slate-900 shadow-[2px_2px_0_#0F172A] 
+    ${isDirty ? "bg-lime-300 text-slate-900" : "bg-slate-200 text-slate-900"}`}
+>
+  <img src="/edit-check.svg" alt="" />
+  {updateItem.isPending ? "저장 중…" : "수정 완료"}
+</button>
+    <button
+      type="button"
+      onClick={handleDelete}
+      disabled={deleteItem.isPending}
+      className="inline-flex items-center gap-1 px-6 h-13 rounded-3xl border-2 border-slate-900 bg-rose-500 text-white shadow-[2px_2px_0_#0F172A]"
+    >
+      <img src="/delete.svg" alt="" />
+      {deleteItem.isPending ? "삭제 중…" : "삭제하기"}
+    </button>
+  </div>
+</div>
+
   );
 }
