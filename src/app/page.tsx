@@ -61,11 +61,11 @@ export default function Home() {
         />
 
         <button
-          className={`h-14 min-w-14 rounded-3xl border-2 border-slate-900 shadow-[2px_2px_0px_#0F172A] transition-colors
+          className={`font-bold h-14 min-w-14 rounded-3xl border-2 border-slate-900 shadow-[2px_2px_0px_#0F172A] transition-colors
     ${value.trim() ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-900"} flex items-center justify-center gap-2 px-4`}
           onClick={handleAdd}
         >
-        +
+          +
           <p className="hidden sm:block whitespace-nowrap">추가하기</p>
         </button>
       </section>
