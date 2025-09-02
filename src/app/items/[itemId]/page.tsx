@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TENANT_ID } from "@/app/features/model/types";
-import { getTodo, patchTodo, deleteTodo, useUploadImage } from "@/app/features/services/queries";
+import { useUploadImage, useGetTodo, usePatchTodo, useDeleteTodo } from "@/app/features/services/queries";
 
 export default function ItemDetailPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const id = Number(itemId);
   const router = useRouter();
 
-  const { data, isLoading, error } = getTodo(TENANT_ID, id);
-  const updateItem = patchTodo(TENANT_ID);
-  const deleteItem = deleteTodo(TENANT_ID);
+  const { data, isLoading, error } = useGetTodo(TENANT_ID, id);
+  const updateItem = usePatchTodo(TENANT_ID);
+  const deleteItem = useDeleteTodo(TENANT_ID);
   const upload = useUploadImage(TENANT_ID);           // ✅ 업로드 훅
 
   const [name, setName] = useState("");

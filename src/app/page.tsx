@@ -3,13 +3,13 @@
 import { TENANT_ID } from "./features/model/types";
 import TodoCard from "./features/components/todoCard";
 import { useState } from "react";
-import { getTodos, patchTodo, postTodo } from "./features/services/queries";
+import { useGetTodos, usePatchTodo, usePostTodo } from "./features/services/queries";
 
 export default function Home() {
 
-  const { data = [], isLoading, error } = getTodos(TENANT_ID, 1, 100);
-  const addTodo = postTodo(TENANT_ID)
-  const updateTodo = patchTodo(TENANT_ID);
+  const { data = [], isLoading, error } = useGetTodos(TENANT_ID, 1, 100);
+  const addTodo = usePostTodo(TENANT_ID)
+  const updateTodo = usePatchTodo(TENANT_ID);
 
   const [value, setValue] = useState("");
 
@@ -23,14 +23,14 @@ export default function Home() {
         onSuccess: () => {
 
           alert('완료되었습니다')
-          setValue(""); 
+          setValue("");
         },
       }
     );
   };
   const handleToggle = (id: number, current: boolean) => {
     updateTodo.mutate(
-      { id, dto: { isCompleted: !current } }, 
+      { id, dto: { isCompleted: !current } },
       {
         onSuccess: () => {
           console.log("업데이트 완료!");

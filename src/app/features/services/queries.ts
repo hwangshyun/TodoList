@@ -95,7 +95,7 @@ function validateImage(file: File) {
   }
     
 
-export function getTodos(tenantId: string, page = 1, pageSize = 100) {
+export function useGetTodos(tenantId: string, page = 1, pageSize = 100) {
   return useQuery(
     queryOptions({
       queryKey: itemsKeys.list(tenantId, page, pageSize),
@@ -104,7 +104,7 @@ export function getTodos(tenantId: string, page = 1, pageSize = 100) {
   );
 }
 
-export function getTodo(tenantId: string, itemId?: number | string) {
+export function useGetTodo(tenantId: string, itemId?: number | string) {
   return useQuery(
     queryOptions({
       queryKey: itemId ? itemsKeys.detail(tenantId, itemId) : [...itemsKeys.root(tenantId), "detail", "nil"],
@@ -114,7 +114,7 @@ export function getTodo(tenantId: string, itemId?: number | string) {
   );
 }
 
-export function postTodo(tenantId: string) {
+export function usePostTodo(tenantId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: { name: string }) => postItem(tenantId, dto),
@@ -122,7 +122,7 @@ export function postTodo(tenantId: string) {
   });
 }
 
-export function patchTodo(tenantId: string) {
+export function usePatchTodo(tenantId: string) {
     const qc = useQueryClient();
     return useMutation({
       mutationFn: (vars: { id: number | string; dto: UpdateItemDto }) =>
@@ -133,7 +133,7 @@ export function patchTodo(tenantId: string) {
       },
     });
   }
-export function deleteTodo(tenantId: string) {
+export function useDeleteTodo(tenantId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (itemId: number | string) => deleteItem(tenantId, itemId),
