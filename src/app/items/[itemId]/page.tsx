@@ -10,7 +10,7 @@ export default function ItemDetailPage() {
   const id = Number(itemId);
   const router = useRouter();
 
-  const { data, isLoading, error } = useGetTodo(TENANT_ID, id);
+  const { data, isLoading } = useGetTodo(TENANT_ID, id);
   const updateItem = usePatchTodo(TENANT_ID);
   const deleteItem = useDeleteTodo(TENANT_ID);
   const upload = useUploadImage(TENANT_ID);
@@ -59,11 +59,11 @@ export default function ItemDetailPage() {
   const handleSave = () => {
     const nm = name.trim();
 
-    const dto: any = {
+    const dto = {
       isCompleted,
       ...(nm ? { name: nm } : {}),
       ...(memo !== undefined ? { memo } : {}),
-      ...(imageUrl ? { imageUrl } : {}),       // 업로드 안 했으면 제외
+      ...(imageUrl ? { imageUrl } : {}),   
     };
 
     updateItem.mutate(
